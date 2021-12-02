@@ -1,9 +1,11 @@
 use std::fs;
 
 mod day1;
+mod day2;
 
 fn main() {
     println!("day1: {:?}", day1::solve().unwrap());
+    println!("day2: {:?}", day2::solve().unwrap());
 }
 
 fn input(day: usize) -> String {
