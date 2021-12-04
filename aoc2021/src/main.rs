@@ -3,11 +3,14 @@ use std::fs;
 mod day1;
 mod day2;
 mod day3;
+mod day4;
 
 fn main() {
+    tracing_subscriber::fmt::init();
     println!("day1: {:?}", day1::solve().unwrap());
     println!("day2: {:?}", day2::solve().unwrap());
     println!("day3: {:?}", day3::solve().unwrap());
+    println!("day4: {:?}", day4::solve().unwrap());
 }
 
 fn input(day: usize) -> String {
