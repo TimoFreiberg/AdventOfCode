@@ -9,13 +9,13 @@ pub fn solve() -> Result<(usize, usize)> {
     let input = input(5);
     let lines = parse(&input)?;
 
-    let part1 = count_line_intersections(&only_diagonal(&lines));
+    let part1 = count_line_intersections(&no_diagonal(&lines));
     let part2 = count_line_intersections(&lines);
 
     Ok((part1, part2))
 }
 
-fn only_diagonal(lines: &[Line]) -> Vec<Line> {
+fn no_diagonal(lines: &[Line]) -> Vec<Line> {
     lines.iter().filter(|l| !l.is_diagonal()).copied().collect()
 }
 
@@ -138,7 +138,7 @@ mod tests {
     fn day5() {
         let result = solve().unwrap();
 
-        assert_eq!(result.0, 8060);
+        assert_eq!(result, (8060, 21577));
     }
 
     #[test]
@@ -156,7 +156,7 @@ mod tests {
 0,0 -> 8,8
 5,5 -> 8,2";
         let lines = parse(input).unwrap();
-        let pt1 = count_line_intersections(only_diagonal(&lines));
+        let pt1 = count_line_intersections(&no_diagonal(&lines));
         assert_eq!(pt1, 5);
     }
 
