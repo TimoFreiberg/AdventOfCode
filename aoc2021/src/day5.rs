@@ -5,82 +5,33 @@ use tracing::debug;
 
 use crate::input;
 
-pub fn solve() -> Result<(usize, ())> {
+pub fn solve() -> Result<(usize, usize)> {
     let input = input(5);
     let lines = parse(&input)?;
 
-    let part1 = count_line_intersections(only_diagonal(&lines));
+    let part1 = count_line_intersections(&only_diagonal(&lines));
+    let part2 = count_line_intersections(&lines);
 
-    Ok((part1, ()))
+    Ok((part1, part2))
 }
 
-fn only_diagonal(lines: &[Line]) -> Vec<&Line> {
-    lines.iter().filter(|l| !l.is_diagonal()).collect()
+fn only_diagonal(lines: &[Line]) -> Vec<Line> {
+    lines.iter().filter(|l| !l.is_diagonal()).copied().collect()
 }
 
-fn count_line_intersections(lines: Vec<&Line>) -> usize {
+fn count_line_intersections(lines: &[Line]) -> usize {
     let mut points = BTreeMap::new();
 
     debug!("Lines: {:?}", lines);
 
     for line in lines {
         for coord in line.points() {
-            *points
-                .entry(coord.x)
-                .or_insert_with(BTreeMap::new)
-                .entry(coord.y)
-                .or_insert(0) += 1;
+            *points.entry(coord).or_insert(0) += 1;
         }
     }
 
-    points
-        .values()
-        .flat_map(|row| row.values().filter(|x| **x >= 2))
-        .count()
-
-    // while let Some(line) = lines.pop() {
-    //     for coord in line.points() {
-    //         if already_found.contains(&coord) {
-    //             continue;
-    //         }
-    //         let intersecting = lines
-    //             .iter()
-    //             .filter(|l| l.points().contains(&coord))
-    //             .collect::<Vec<_>>();
-
-    //         if !intersecting.is_empty() {
-    //             debug!(
-    //                 "Intersection at {:?} - with {:?} over {:?}",
-    //                 coord, line, intersecting
-    //             );
-    //             dangerous_points_count += 1;
-    //             already_found.insert(coord);
-    //         }
-    //     }
-    // }
-
-    // dangerous_points_count
+    points.values().filter(|x| **x >= 2).count()
 }
-
-// fn highest(lines: &[Line]) -> (u32, u32) {
-//     let mut max_x = 0;
-//     let mut max_y = 0;
-//     for line in lines {
-//         if line.from.x > max_x {
-//             max_x = line.from.x;
-//         }
-//         if line.to.x > max_x {
-//             max_x = line.to.x;
-//         }
-//         if line.from.y > max_y {
-//             max_y = line.from.y;
-//         }
-//         if line.to.y > max_y {
-//             max_y = line.to.y;
-//         }
-//     }
-//     (max_x, max_y)
-// }
 
 fn parse(input: &str) -> Result<Vec<Line>> {
     let mut result = Vec::new();
@@ -97,7 +48,7 @@ fn parse(input: &str) -> Result<Vec<Line>> {
     Ok(result)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct Line {
     from: Coord,
     to: Coord,
@@ -106,16 +57,25 @@ struct Line {
 impl Line {
     fn points(&self) -> Vec<Coord> {
         if self.from.x == self.to.x {
-            let y0 = self.from.y.min(self.to.y);
-            let y1 = self.from.y.max(self.to.y);
-            (y0..=y1).map(|y| Coord { x: self.from.x, y }).collect()
+            self.from
+                .y_range(&self.to)
+                .into_iter()
+                .map(|y| Coord { x: self.from.x, y })
+                .collect()
         } else if self.from.y == self.to.y {
-            let x0 = self.from.x.min(self.to.x);
-            let x1 = self.from.x.max(self.to.x);
-            (x0..=x1).map(|x| Coord { x, y: self.from.y }).collect()
+            self.from
+                .x_range(&self.to)
+                .into_iter()
+                .map(|x| Coord { x, y: self.from.y })
+                .collect()
         } else {
-            assert!(self.from.x - self.to.x == self.from.y - self.to.y);
-            vec![]
+            assert!(abs_diff(self.from.x, self.to.x) == abs_diff(self.from.y, self.to.y));
+            self.from
+                .x_range(&self.to)
+                .into_iter()
+                .zip(self.from.y_range(&self.to))
+                .map(|(x, y)| Coord { x, y })
+                .collect()
         }
     }
     fn is_diagonal(&self) -> bool {
@@ -123,10 +83,35 @@ impl Line {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+fn abs_diff(x: u32, y: u32) -> u32 {
+    if x > y {
+        x - y
+    } else {
+        y - x
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 struct Coord {
     x: u32,
     y: u32,
+}
+
+impl Coord {
+    fn x_range(&self, other: &Self) -> Vec<u32> {
+        if self.x > other.x {
+            (other.x..=self.x).rev().collect()
+        } else {
+            (self.x..=other.x).collect()
+        }
+    }
+    fn y_range(&self, other: &Self) -> Vec<u32> {
+        if self.y > other.y {
+            (other.y..=self.y).rev().collect()
+        } else {
+            (self.y..=other.y).collect()
+        }
+    }
 }
 
 impl FromStr for Coord {
@@ -181,13 +166,13 @@ mod tests {
         assert_eq!(
             lines[0].points(),
             vec![
-                Coord { x: 3, y: 4 },
-                Coord { x: 4, y: 4 },
-                Coord { x: 5, y: 4 },
-                Coord { x: 6, y: 4 },
-                Coord { x: 7, y: 4 },
-                Coord { x: 8, y: 4 },
                 Coord { x: 9, y: 4 },
+                Coord { x: 8, y: 4 },
+                Coord { x: 7, y: 4 },
+                Coord { x: 6, y: 4 },
+                Coord { x: 5, y: 4 },
+                Coord { x: 4, y: 4 },
+                Coord { x: 3, y: 4 },
             ]
         )
     }
