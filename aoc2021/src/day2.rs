@@ -8,7 +8,7 @@ pub fn solve() -> Result<(u32, u32)> {
     let input = input(2);
     let directions = input
         .lines()
-        .map(|line| Dir::from_str(line))
+        .map(Dir::from_str)
         .collect::<Result<Vec<_>>>()?;
 
     Ok((part1(&directions), part2(&directions)))

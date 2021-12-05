@@ -27,7 +27,7 @@ fn parse(input: &str) -> Result<Game> {
 
     let numbers = paragraphs
         .next()
-        .ok_or(eyre!("Missing first numbers paragraph"))?
+        .ok_or_else(|| eyre!("Missing first numbers paragraph"))?
         .split(',')
         .map(|n| Ok(n.parse::<u8>()?))
         .collect::<Result<Vec<_>>>()?;

@@ -19,19 +19,18 @@ fn solve_for_input(input: &str) -> Result<(u32, u32), eyre::Error> {
     Ok((part1, part2))
 }
 
-fn part1(lines: &Vec<Vec<char>>) -> u32 {
+fn part1(lines: &[Vec<char>]) -> u32 {
     let (most_common_bits, least_common_bits) = bits(lines);
     let gamma = u32::from_str_radix(&most_common_bits, 2).unwrap();
     let epsilon = u32::from_str_radix(&least_common_bits, 2).unwrap();
-    let part1 = gamma * epsilon;
-    part1
+    gamma * epsilon
 }
 
-fn part2(lines: &Vec<Vec<char>>) -> u32 {
-    let (mut most_common_bits, mut least_common_bits) = bits(&lines);
+fn part2(lines: &[Vec<char>]) -> u32 {
+    let (mut most_common_bits, mut least_common_bits) = bits(lines);
     let line_len = most_common_bits.len();
 
-    let mut oxygen_input = lines.clone();
+    let mut oxygen_input = lines.to_vec();
     for pos in 0..line_len {
         oxygen_input.retain(|line| line[pos] == most_common_bits.chars().nth(pos).unwrap());
         most_common_bits = bits(&oxygen_input).0;
@@ -43,7 +42,7 @@ fn part2(lines: &Vec<Vec<char>>) -> u32 {
     let oxygen_rating =
         u32::from_str_radix(&String::from_iter(oxygen_input.get(0).unwrap()), 2).unwrap();
 
-    let mut co2_scrubber_input = lines.clone();
+    let mut co2_scrubber_input = lines.to_vec();
     for pos in 0..line_len {
         co2_scrubber_input.retain(|line| {
             line[pos]
