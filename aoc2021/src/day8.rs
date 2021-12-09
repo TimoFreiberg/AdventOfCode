@@ -5,6 +5,7 @@ use std::{
 
 use eyre::{bail, eyre, Result};
 use itertools::Itertools;
+use tracing::debug;
 
 use crate::input;
 
@@ -52,49 +53,52 @@ impl Display {
     }
 
     fn brute_force(&self) -> Result<u32> {
-        // let one = self
-        //     .signal_patterns
-        //     .iter()
-        //     .find(|pat| pat.len() == 2)
-        //     .unwrap();
-        // let seven = self
-        //     .signal_patterns
-        //     .iter()
-        //     .find(|pat| pat.len() == 3)
-        //     .unwrap();
-        // let mapped_to_a = seven.chars().find(|c| !one.contains(*c)).unwrap();
+        let one = self
+            .signal_patterns
+            .iter()
+            .find(|pat| pat.len() == 2)
+            .unwrap();
+        let seven = self
+            .signal_patterns
+            .iter()
+            .find(|pat| pat.len() == 3)
+            .unwrap();
+        let mapped_to_a = seven.chars().find(|c| !one.contains(*c)).unwrap();
 
-        // for from in 'a'..='g' {
-        //     let possible = if from == 'a' {
-        //         BTreeSet::from_iter([mapped_to_a])
-        //     } else {
-        //         self.signal_patterns
-        //             .iter()
-        //             .filter(|s| s.contains(from))
-        //             .flat_map(|s| length_mapping(s.len()))
-        //             .flat_map(|digit| char_mapping(digit).chars())
-        //             .collect()
-        //     };
-        //     for to in possible {
+        let from = Vec::from_iter('a'..='g');
+        let mut possible_mapping = Vec::new();
+        for from_char in from {
+            if from_char == mapped_to_a {
+                possible_mapping.push(BTreeSet::from_iter(['a']));
+                continue;
+            }
+            let signals_containing_from = self
+                .signal_patterns
+                .iter()
+                .filter(|s| s.contains(from_char));
+            let possible_mappings_for_from = signals_containing_from
+                .flat_map(|s| length_mapping(s.len()))
+                .map(char_mapping)
+                .flat_map(|s| s.chars())
+                .collect::<BTreeSet<_>>();
+            possible_mapping.push(possible_mappings_for_from);
+        }
 
-        //     }
-        // }
-
-        for from_permutation in ('a'..='g').permutations(7) {
-            for to_permutation in ('a'..='g').permutations(7) {
-                let mapping = from_permutation
+        for to_permutation in ('a'..='g').permutations(7).filter(|permutation| {
+            permutation
+                .iter()
+                .zip(&possible_mapping)
+                .all(|(mapping, possible_mappings)| possible_mappings.contains(mapping))
+        }) {
+            let from = 'a'..='g';
+            let mapping = from.zip(to_permutation).collect();
+            if self.valid_mapping(&mapping) {
+                let result = self
+                    .output
                     .iter()
-                    .copied()
-                    .zip(to_permutation)
-                    .collect();
-                if self.valid_mapping(&mapping) {
-                    let result = self
-                        .output
-                        .iter()
-                        .map(|s| signal_mapping(&apply_mapping(s, &mapping).unwrap()).to_string())
-                        .collect::<String>();
-                    return Ok(result.parse()?);
-                }
+                    .map(|s| signal_mapping(&apply_mapping(s, &mapping).unwrap()).to_string())
+                    .collect::<String>();
+                return Ok(result.parse()?);
             }
         }
         bail!("No mapping found :(");
@@ -107,16 +111,16 @@ impl Display {
                 Some(mapped) => {
                     let result = valid_signal(&sort_string(&mapped));
                     if !result {
-                        // eprintln!(
-                        //     "Invalid signal {:?} (mapped from {:?})",
-                        //     sort_string(&mapped),
-                        //     sort_string(s)
-                        // );
+                        debug!(
+                            "Invalid signal {:?} (mapped from {:?})",
+                            sort_string(&mapped),
+                            sort_string(s)
+                        );
                     }
                     result
                 }
                 None => {
-                    // eprintln!("Incomplete mapping, {:?} couldn't be mapped", s);
+                    debug!("Incomplete mapping, {:?} couldn't be mapped", s);
                     false
                 }
             })
@@ -229,8 +233,8 @@ mod tests {
     #[test]
     fn day8() {
         let (part1, part2) = solve().unwrap();
-        assert!(part2 > 3608);
         assert_eq!(part1, 288);
+        assert_eq!(part2, 940724);
     }
 
     #[test]
