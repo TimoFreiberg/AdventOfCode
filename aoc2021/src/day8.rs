@@ -1,11 +1,6 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    str::FromStr,
-};
+use std::{collections::BTreeMap, str::FromStr};
 
-use eyre::{bail, eyre, Result};
-use itertools::Itertools;
-use tracing::debug;
+use eyre::{eyre, Result};
 
 use crate::input;
 
@@ -21,10 +16,7 @@ fn part1(displays: &[Display]) -> usize {
 }
 
 fn part2(displays: &[Display]) -> u32 {
-    displays
-        .iter()
-        .map(|display| display.brute_force().unwrap())
-        .sum()
+    displays.iter().map(|display| display.part2_puzzle()).sum()
 }
 
 fn parse(input: &str) -> Result<Vec<Display>> {
@@ -33,8 +25,8 @@ fn parse(input: &str) -> Result<Vec<Display>> {
 
 #[derive(Debug)]
 struct Display {
-    signal_patterns: Vec<String>,
-    output: Vec<String>,
+    signal_patterns: Vec<Signal>,
+    output: Vec<Signal>,
 }
 
 impl Display {
@@ -42,7 +34,7 @@ impl Display {
         self.output
             .iter()
             .filter_map(|s| {
-                let matching = length_mapping(s.len());
+                let matching = length_mapping(s.0.len());
                 if matching.len() == 1 {
                     Some(matching[0])
                 } else {
@@ -52,135 +44,112 @@ impl Display {
             .collect()
     }
 
-    fn brute_force(&self) -> Result<u32> {
-        let one = self
-            .signal_patterns
+    fn part2_puzzle(&self) -> u32 {
+        let one = self.signal_patterns_with_length(2)[0];
+        let four = self.signal_patterns_with_length(4)[0];
+        let seven = self.signal_patterns_with_length(3)[0];
+        let eight = self.signal_patterns_with_length(7)[0];
+
+        let a = seven.difference(one);
+
+        let nine = self
+            .signal_patterns_with_length(6)
+            .into_iter()
+            .filter(|s| s.difference(four).difference(&a).0.len() == 1)
+            .collect::<Vec<_>>();
+        assert_eq!(nine.len(), 1, "Only one 'nine': {:?}", nine);
+
+        let nine = nine[0];
+
+        let two_three_five = self.signal_patterns_with_length(5);
+
+        let two = two_three_five
             .iter()
-            .find(|pat| pat.len() == 2)
-            .unwrap();
-        let seven = self
-            .signal_patterns
+            .filter(|s| !s.difference(nine).0.is_empty())
+            .collect::<Vec<_>>();
+
+        assert_eq!(two.len(), 1, "Two: {:?}", two);
+
+        let two = two[0];
+
+        let three = two_three_five
             .iter()
-            .find(|pat| pat.len() == 3)
-            .unwrap();
-        let mapped_to_a = seven.chars().find(|c| !one.contains(*c)).unwrap();
+            .filter(|s| s.difference(two).0.len() == 1)
+            .collect::<Vec<_>>();
 
-        let from = Vec::from_iter('a'..='g');
-        let mut possible_mapping = Vec::new();
-        for from_char in from {
-            if from_char == mapped_to_a {
-                possible_mapping.push(BTreeSet::from_iter(['a']));
-                continue;
-            }
-            let signals_containing_from = self
-                .signal_patterns
-                .iter()
-                .filter(|s| s.contains(from_char));
-            let possible_mappings_for_from = signals_containing_from
-                .flat_map(|s| length_mapping(s.len()))
-                .map(char_mapping)
-                .flat_map(|s| s.chars())
-                .collect::<BTreeSet<_>>();
-            possible_mapping.push(possible_mappings_for_from);
-        }
+        assert_eq!(three.len(), 1, "Three: {:?}", three);
 
-        for to_permutation in ('a'..='g').permutations(7).filter(|permutation| {
-            permutation
-                .iter()
-                .zip(&possible_mapping)
-                .all(|(mapping, possible_mappings)| possible_mappings.contains(mapping))
-        }) {
-            let from = 'a'..='g';
-            let mapping = from.zip(to_permutation).collect();
-            if self.valid_mapping(&mapping) {
-                let result = self
-                    .output
-                    .iter()
-                    .map(|s| signal_mapping(&apply_mapping(s, &mapping).unwrap()).to_string())
-                    .collect::<String>();
-                return Ok(result.parse()?);
-            }
-        }
-        bail!("No mapping found :(");
-    }
+        let three = three[0];
 
-    fn valid_mapping(&self, mapping: &BTreeMap<char, char>) -> bool {
-        self.signal_patterns
+        let five = two_three_five
             .iter()
-            .all(|s| match apply_mapping(s, mapping) {
-                Some(mapped) => {
-                    let result = valid_signal(&sort_string(&mapped));
-                    if !result {
-                        debug!(
-                            "Invalid signal {:?} (mapped from {:?})",
-                            sort_string(&mapped),
-                            sort_string(s)
-                        );
-                    }
-                    result
-                }
-                None => {
-                    debug!("Incomplete mapping, {:?} couldn't be mapped", s);
-                    false
-                }
-            })
+            .filter(|&s| s != two && s != three)
+            .collect::<Vec<_>>();
+
+        assert_eq!(five.len(), 1, "Five: {:?}", five);
+
+        let five = five[0];
+
+        let six = self
+            .signal_patterns_with_length(6)
+            .into_iter()
+            .filter(|s| eight.difference(s).intersection(one).0.len() == 1)
+            .collect::<Vec<_>>();
+
+        assert_eq!(six.len(), 1, "Six: {:?}", six);
+
+        let six = six[0];
+
+        let zero = self
+            .signal_patterns_with_length(6)
+            .into_iter()
+            .filter(|&s| s != six && s != nine)
+            .collect::<Vec<_>>();
+
+        assert_eq!(zero.len(), 1, "Zero: {:?}", zero);
+
+        let zero = zero[0];
+
+        let mapping = BTreeMap::from_iter([
+            (zero, '0'),
+            (one, '1'),
+            (two, '2'),
+            (three, '3'),
+            (four, '4'),
+            (five, '5'),
+            (six, '6'),
+            (seven, '7'),
+            (eight, '8'),
+            (nine, '9'),
+        ]);
+
+        let result = self
+            .output
+            .iter()
+            .map(|signal| mapping[signal])
+            .collect::<String>();
+
+        result.parse().unwrap()
+    }
+
+    fn signal_patterns_with_length(&self, len: usize) -> Vec<&Signal> {
+        self.signal_patterns_matching(|s| s.0.len() == len)
+    }
+
+    fn signal_patterns_matching(&self, pred: impl Fn(&Signal) -> bool) -> Vec<&Signal> {
+        self.signal_patterns.iter().filter(|s| pred(s)).collect()
     }
 }
 
-fn apply_mapping(s: &str, mapping: &BTreeMap<char, char>) -> Option<String> {
-    let mut result = Vec::with_capacity(s.len());
-    for c in s.chars() {
-        result.push(*mapping.get(&c)?);
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+struct Signal(String);
+
+impl Signal {
+    fn difference(&self, other: &Self) -> Self {
+        Signal(self.0.chars().filter(|c| !other.0.contains(*c)).collect())
     }
-    result.sort_unstable();
-    Some(String::from_iter(result))
-}
-
-fn valid_signal(signal: &str) -> bool {
-    matches!(
-        signal,
-        "abcefg"
-            | "cf"
-            | "acdeg"
-            | "acdfg"
-            | "bcdf"
-            | "abdfg"
-            | "abdefg"
-            | "acf"
-            | "abcdefg"
-            | "abcdfg"
-    )
-}
-
-fn signal_mapping(signal: &str) -> u8 {
-    match signal {
-        "abcefg" => 0,
-        "cf" => 1,
-        "acdeg" => 2,
-        "acdfg" => 3,
-        "bcdf" => 4,
-        "abdfg" => 5,
-        "abdefg" => 6,
-        "acf" => 7,
-        "abcdefg" => 8,
-        "abcdfg" => 9,
-        _ => unreachable!("Illegal signal {:?}", signal),
-    }
-}
-
-fn char_mapping(digit: u8) -> &'static str {
-    match digit {
-        0 => "abcefg",
-        1 => "cf",
-        2 => "acdeg",
-        3 => "acdfg",
-        4 => "bcdf",
-        5 => "abdfg",
-        6 => "abdefg",
-        7 => "acf",
-        8 => "abcdefg",
-        9 => "abcdfg",
-        _ => unreachable!("Illegal digit {:?}", digit),
+    fn intersection(&self, other: &Self) -> Self {
+        Signal(self.0.chars().filter(|c| other.0.contains(*c)).collect())
     }
 }
 
@@ -206,12 +175,12 @@ impl FromStr for Display {
         let signal_patterns = signal_patterns
             .trim()
             .split_whitespace()
-            .map(ToString::to_string)
+            .map(|s| Signal(sort_string(s)))
             .collect();
         let output = output
             .trim()
             .split_whitespace()
-            .map(ToString::to_string)
+            .map(|s| Signal(sort_string(s)))
             .collect();
         Ok(Display {
             signal_patterns,
@@ -235,16 +204,5 @@ mod tests {
         let (part1, part2) = solve().unwrap();
         assert_eq!(part1, 288);
         assert_eq!(part2, 940724);
-    }
-
-    #[test]
-    fn day8_example() {
-        let input =
-            "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf";
-        let displays = parse(input).unwrap();
-        let display = &displays[0];
-        let dfs_result = display.brute_force();
-
-        assert_eq!(dfs_result.unwrap(), 5353);
     }
 }
