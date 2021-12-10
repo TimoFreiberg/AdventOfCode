@@ -9,6 +9,7 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
+mod day10;
 
 fn main() {
     tracing_subscriber::fmt::init();
@@ -21,6 +22,7 @@ fn main() {
     println!("day7: {:?}", day7::solve().unwrap());
     println!("day8: {:?}", day8::solve().unwrap());
     println!("day9: {:?}", day9::solve().unwrap());
+    println!("day10: {:?}", day10::solve().unwrap());
 }
 
 fn input(day: usize) -> String {
