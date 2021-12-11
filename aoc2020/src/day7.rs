@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use eyre::{eyre, Context};
-use log::debug;
+use tracing::debug;
 
 const INPUT: &str = include_str!("../input7.txt");
 

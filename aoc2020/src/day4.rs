@@ -1,5 +1,5 @@
 use eyre::Result;
-use log::debug;
+use tracing::debug;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashMap;

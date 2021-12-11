@@ -1,4 +1,4 @@
-use log::debug;
+use tracing::debug;
 use std::str::pattern::Pattern;
 
 const INPUT: &str = include_str!("../input2.txt");
