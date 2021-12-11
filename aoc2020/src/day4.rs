@@ -44,7 +44,7 @@ fn parse_passport(passport_lines: &str) -> Passport {
         hcl: fields.remove("hcl"),
         ecl: fields.remove("ecl"),
         pid: fields.remove("pid"),
-        cid: fields.remove("cid"),
+        // cid: fields.remove("cid"),
     };
     debug!("Created passport {:?}", passport);
     passport
@@ -59,7 +59,7 @@ struct Passport {
     hcl: Option<String>,
     ecl: Option<String>,
     pid: Option<String>,
-    cid: Option<String>,
+    // cid: Option<String>,
 }
 
 impl Passport {
