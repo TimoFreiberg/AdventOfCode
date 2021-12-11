@@ -8,6 +8,7 @@ mod day4;
 mod day5;
 mod day6;
 mod day7;
+mod day8;
 
 fn main() {
     tracing_subscriber::fmt::init();
@@ -19,6 +20,7 @@ fn main() {
     day5::solve().unwrap();
     day6::solve().unwrap();
     day7::solve().unwrap();
+    day8::solve().unwrap();
 }
 
 #[cfg(test)]
