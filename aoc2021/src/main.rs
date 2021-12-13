@@ -1,6 +1,10 @@
 use std::fs;
 
 mod day1;
+mod day10;
+mod day11;
+mod day12;
+mod day13;
 mod day2;
 mod day3;
 mod day4;
@@ -9,9 +13,6 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
-mod day10;
-mod day11;
-mod day12;
 
 fn main() {
     tracing_subscriber::fmt::init();
@@ -27,6 +28,9 @@ fn main() {
     println!("day10: {:?}", day10::solve().unwrap());
     println!("day11: {:?}", day11::solve().unwrap());
     println!("day12: {:?}", day12::solve().unwrap());
+    let (day13_1, day13_2) = day13::solve().unwrap();
+    println!("day13.1: {:?}", day13_1);
+    println!("day13.2:\n{}", day13_2);
 }
 
 fn input(day: usize) -> String {
