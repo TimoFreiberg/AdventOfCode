@@ -108,12 +108,23 @@ mod tests {
     fn day13() {
         let (part1, part2) = solve().unwrap();
 
-        assert!(part1 > 102)
+        assert_eq!(part1, 818);
+        assert_eq!(
+            part2,
+            "\
+#....###...##..###..###..####..##..###.
+#....#..#.#..#.#..#.#..#.#....#..#.#..#
+#....#..#.#....#..#.#..#.###..#....###.
+#....###..#.##.###..###..#....#....#..#
+#....#.#..#..#.#....#.#..#....#..#.#..#
+####.#..#..###.#....#..#.####..##..###.
+"
+        );
     }
 
     #[test]
     fn day13_ex() {
-        let (a, b) = parse(
+        let (dots, instructions) = parse(
             "6,10
 0,14
 9,10
@@ -137,7 +148,7 @@ fold along y=7
 fold along x=5",
         )
         .unwrap();
-        let part1 = part1(a, &b[..1]);
+        let part1 = run(dots, &instructions[..1]).len();
 
         assert_eq!(part1, 17);
     }
