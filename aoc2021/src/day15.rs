@@ -11,9 +11,7 @@ pub fn solve() -> Result<(u32, u32)> {
     let grid1 = parse1(&input);
     let grid2 = parse2(&input);
 
-
-    Ok((0, grid2.solve()))
-    // Ok((grid1.solve(), grid2.solve()))
+    Ok((grid1.solve(), grid2.solve()))
 }
 
 struct Grid {
