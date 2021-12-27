@@ -11,6 +11,7 @@ mod day16;
 mod day17;
 mod day18;
 mod day2;
+mod day24;
 mod day3;
 mod day4;
 mod day5;
@@ -41,6 +42,7 @@ fn main() {
     println!("day16: {:?}", day16::solve().unwrap());
     println!("day17: {:?}", day17::solve().unwrap());
     println!("day18: {:?}", day18::solve().unwrap());
+    println!("day24: {:?}", day24::solve().unwrap());
 }
 
 fn input(day: usize) -> String {
