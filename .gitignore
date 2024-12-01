@@ -1,3 +1,8 @@
 target
 **/inputs
 session.cookie
+
+
+# Added by cargo
+
+/target
